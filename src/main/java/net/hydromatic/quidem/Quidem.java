@@ -323,6 +323,10 @@ public class Quidem {
             SqlCommand command = previousSqlCommand();
             return new CheckResultCommand(lines, command, content);
           }
+          if (line.startsWith("update")) {
+            SqlCommand command = previousSqlCommand();
+            return new UpdateCommand(lines, command, content);
+          }
           if (line.startsWith("plan")) {
             SqlCommand command = previousSqlCommand();
             return new ExplainCommand(lines, command, content);
@@ -771,6 +775,66 @@ public class Quidem {
     }
   }
 
+  /** Command that executes a SQL update and checks its count. */
+  class UpdateCommand extends SimpleCommand {
+    private final SqlCommand sqlCommand;
+    protected final ImmutableList<String> output;
+
+    public UpdateCommand(List<String> lines, SqlCommand sqlCommand,
+                              ImmutableList<String> output) {
+      super(lines);
+      this.sqlCommand = sqlCommand;
+      this.output = output;
+    }
+
+    @Override public String toString() {
+      return "UpdateCommand [sql: " + sqlCommand.sql + "]";
+    }
+
+    public void execute(boolean execute) throws Exception {
+      if (execute) {
+        if (connection == null) {
+          throw new RuntimeException("no connection");
+        }
+        final Statement statement = connection.createStatement();
+        if (resultSet != null) {
+          resultSet.close();
+        }
+        try {
+          if (DEBUG) {
+            System.out.println("execute: " + this);
+          }
+          resultSet = null;
+          resultSetException = null;
+          final int updateCount = statement.executeUpdate(sqlCommand.sql);
+          writer.println("Updated " + updateCount
+                  + ((updateCount == 1) ? " row." : " rows."));
+          final String sql = sqlCommand.sql;
+          sort = !isProbablyDeterministic(sql);
+        } catch (SQLException e) {
+          resultSetException = e;
+        } finally {
+          statement.close();
+        }
+
+        checkResultSet(resultSetException);
+        writer.println();
+
+        resultSet = null;
+        resultSetException = null;
+      } else {
+        echo(output);
+      }
+      echo(lines);
+    }
+
+    protected void checkResultSet(SQLException resultSetException) {
+      if (resultSetException != null) {
+        stack(resultSetException, writer);
+      }
+    }
+  }
+
   /** Command that executes a SQL statement and checks that it throws a given
    * error. */
   class ErrorCommand extends CheckResultCommand {
@@ -901,6 +965,7 @@ public class Quidem {
    *
    * @see CheckResultCommand
    * @see ExplainCommand
+   * @see UpdateCommand
    */
   class SetCommand extends SimpleCommand {
     private final Property property;
