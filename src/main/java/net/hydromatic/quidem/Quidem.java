@@ -323,6 +323,10 @@ public class Quidem {
             SqlCommand command = previousSqlCommand();
             return new CheckResultCommand(lines, command, content);
           }
+          if (line.startsWith("update")) {
+            SqlCommand command = previousSqlCommand();
+            return new UpdateCommand(lines, command, content);
+          }
           if (line.startsWith("plan")) {
             SqlCommand command = previousSqlCommand();
             return new ExplainCommand(lines, command, content);
@@ -681,77 +685,141 @@ public class Quidem {
           resultSet.close();
         }
         try {
+          try {
+            if (DEBUG) {
+              System.out.println("execute: " + this);
+            }
+            resultSet = null;
+            resultSetException = null;
+            resultSet = statement.executeQuery(sqlCommand.sql);
+            final String sql = sqlCommand.sql;
+            sort = !isProbablyDeterministic(sql);
+          } catch (SQLException e) {
+            resultSetException = e;
+          }
+          if (resultSet != null) {
+            final OutputFormat format =
+                (OutputFormat) map.get(Property.OUTPUTFORMAT);
+            final List<String> headerLines = new ArrayList<String>();
+            final List<String> bodyLines = new ArrayList<String>();
+            final List<String> footerLines = new ArrayList<String>();
+            format.format(resultSet, headerLines, bodyLines, footerLines,
+                Quidem.this);
+
+            // Construct the original body.
+            // Strip the header and footer from the actual output.
+            // We assume original and actual header have the same line count.
+            // Ditto footers.
+            final List<String> lines = new ArrayList<String>(output);
+            for (String line : headerLines) {
+              if (!lines.isEmpty()) {
+                lines.remove(0);
+              }
+            }
+            for (String line : footerLines) {
+              if (!lines.isEmpty()) {
+                lines.remove(lines.size() - 1);
+              }
+            }
+
+            // Print the actual header.
+            for (String line : headerLines) {
+              writer.println(line);
+            }
+            // Print all lines that occurred in the actual output ("bodyLines"),
+            // but in their original order ("lines").
+            for (String line : lines) {
+              if (sort) {
+                if (bodyLines.remove(line)) {
+                  writer.println(line);
+                }
+              } else {
+                if (!bodyLines.isEmpty()
+                    && bodyLines.get(0).equals(line)) {
+                  bodyLines.remove(0);
+                  writer.println(line);
+                }
+              }
+            }
+            // Print lines that occurred in the actual output but not original.
+            for (String line : bodyLines) {
+              writer.println(line);
+            }
+            // Print the actual footer.
+            for (String line : footerLines) {
+              writer.println(line);
+            }
+            resultSet.close();
+          }
+
+          checkResultSet(resultSetException);
+
+          if (resultSet == null && resultSetException == null) {
+            throw new AssertionError("neither resultSet nor exception set");
+          }
+          resultSet = null;
+          resultSetException = null;
+        } finally {
+          statement.close();
+        }
+      } else {
+        echo(output);
+      }
+      echo(lines);
+    }
+
+    protected void checkResultSet(SQLException resultSetException) {
+      if (resultSetException != null) {
+        stack(resultSetException, writer);
+      }
+    }
+  }
+
+  /** Command that executes a SQL update and checks its count. */
+  class UpdateCommand extends SimpleCommand {
+    private final SqlCommand sqlCommand;
+    protected final ImmutableList<String> output;
+
+    public UpdateCommand(List<String> lines, SqlCommand sqlCommand,
+                              ImmutableList<String> output) {
+      super(lines);
+      this.sqlCommand = sqlCommand;
+      this.output = output;
+    }
+
+    @Override public String toString() {
+      return "UpdateCommand [sql: " + sqlCommand.sql + "]";
+    }
+
+    public void execute(boolean execute) throws Exception {
+      if (execute) {
+        if (connection == null) {
+          throw new RuntimeException("no connection");
+        }
+        final Statement statement = connection.createStatement();
+        if (resultSet != null) {
+          resultSet.close();
+        }
+        try {
           if (DEBUG) {
             System.out.println("execute: " + this);
           }
           resultSet = null;
           resultSetException = null;
-          resultSet = statement.executeQuery(sqlCommand.sql);
+          final int updateCount = statement.executeUpdate(sqlCommand.sql);
+          writer.println("Updated " + updateCount
+                  + ((updateCount == 1) ? " row." : " rows."));
           final String sql = sqlCommand.sql;
           sort = !isProbablyDeterministic(sql);
         } catch (SQLException e) {
           resultSetException = e;
-        }
-        if (resultSet != null) {
-          final OutputFormat format =
-              (OutputFormat) map.get(Property.OUTPUTFORMAT);
-          final List<String> headerLines = new ArrayList<String>();
-          final List<String> bodyLines = new ArrayList<String>();
-          final List<String> footerLines = new ArrayList<String>();
-          format.format(resultSet, headerLines, bodyLines, footerLines,
-              Quidem.this);
-
-          // Construct the original body.
-          // Strip the header and footer from the actual output.
-          // We assume that original and actual header have the same line count.
-          // Ditto footers.
-          final List<String> lines = new ArrayList<String>(output);
-          for (String line : headerLines) {
-            if (!lines.isEmpty()) {
-              lines.remove(0);
-            }
-          }
-          for (String line : footerLines) {
-            if (!lines.isEmpty()) {
-              lines.remove(lines.size() - 1);
-            }
-          }
-
-          // Print the actual header.
-          for (String line : headerLines) {
-            writer.println(line);
-          }
-          // Print all lines that occurred in the actual output ("bodyLines"),
-          // but in their original order ("lines").
-          for (String line : lines) {
-            if (sort) {
-              if (bodyLines.remove(line)) {
-                writer.println(line);
-              }
-            } else {
-              if (!bodyLines.isEmpty()
-                  && bodyLines.get(0).equals(line)) {
-                bodyLines.remove(0);
-                writer.println(line);
-              }
-            }
-          }
-          // Print lines that occurred in the actual output but not original.
-          for (String line : bodyLines) {
-            writer.println(line);
-          }
-          // Print the actual footer.
-          for (String line : footerLines) {
-            writer.println(line);
-          }
-          resultSet.close();
+        } finally {
+          statement.close();
         }
 
         checkResultSet(resultSetException);
+        writer.println();
 
-        if (resultSet == null && resultSetException == null) {
-          throw new AssertionError("neither resultSet nor exception set");
-        }
         resultSet = null;
         resultSetException = null;
       } else {
@@ -833,21 +901,29 @@ public class Quidem {
     public void execute(boolean execute) throws Exception {
       if (execute) {
         final Statement statement = connection.createStatement();
-        final ResultSet resultSet =
-            statement.executeQuery("explain plan for " + sqlCommand.sql);
-        final StringBuffer buf = new StringBuffer();
-        while (resultSet.next()) {
-          final String line = resultSet.getString(1);
-          buf.append(line);
-          if (!line.endsWith("\n")) {
-            buf.append("\n");
+        try {
+          final ResultSet resultSet =
+              statement.executeQuery("explain plan for " + sqlCommand.sql);
+          try {
+            final StringBuffer buf = new StringBuffer();
+            while (resultSet.next()) {
+              final String line = resultSet.getString(1);
+              buf.append(line);
+              if (!line.endsWith("\n")) {
+                buf.append("\n");
+              }
+            }
+            if (buf.length() == 0) {
+              throw new AssertionError("explain returned 0 records");
+            }
+            writer.print(buf);
+            writer.flush();
+          } finally {
+            resultSet.close();
           }
+        } finally {
+          statement.close();
         }
-        if (buf.length() == 0) {
-          throw new AssertionError("explain returned 0 records");
-        }
-        writer.print(buf);
-        writer.flush();
       } else {
         echo(content);
       }
@@ -889,6 +965,7 @@ public class Quidem {
    *
    * @see CheckResultCommand
    * @see ExplainCommand
+   * @see UpdateCommand
    */
   class SetCommand extends SimpleCommand {
     private final Property property;

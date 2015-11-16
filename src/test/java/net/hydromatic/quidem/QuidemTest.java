@@ -656,6 +656,21 @@ public class QuidemTest {
                 + "\n");
   }
 
+  /** Content inside a '!update' command, that needs to be matched. */
+  @Test public void testUpdate() {
+    check(
+        "!use scott\n"
+            + "insert into scott.dept values (50, 'DEV', 'SAN DIEGO');\n"
+            + "!update\n"
+            + "\n")
+        .contains(
+            "!use scott\n"
+                + "insert into scott.dept values (50, 'DEV', 'SAN DIEGO');\n"
+                + "Updated 1 row.\n\n"
+                + "!update\n"
+                + "\n");
+  }
+
   @Test public void testUsage() throws Exception {
     final Matcher<String> matcher =
         startsWith("Usage: quidem argument... inFile outFile");
