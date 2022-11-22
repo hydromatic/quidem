@@ -756,6 +756,7 @@ public class QuidemTest {
         + "!ok\n"
         + "\n";
     assertThatQuidem(input).output(containsString(output));
+    assertThatQuidem(output).output(containsString(output));
   }
 
   @Test void testTrimTrailingSpacesOracle() {
@@ -781,6 +782,7 @@ public class QuidemTest {
         + "!ok\n"
         + "\n";
     assertThatQuidem(input).output(containsString(output));
+    assertThatQuidem(output).output(containsString(output));
   }
 
   @Test void testTrimTrailingSpacesPsql() {
@@ -805,6 +807,7 @@ public class QuidemTest {
         + "!ok\n"
         + "\n";
     assertThatQuidem(input).output(containsString(output));
+    assertThatQuidem(output).output(containsString(output));
   }
 
   /** Test case for

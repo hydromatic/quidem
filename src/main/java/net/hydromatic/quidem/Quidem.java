@@ -21,6 +21,8 @@ import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Ordering;
 
+import org.checkerframework.checker.nullness.qual.Nullable;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -572,6 +574,15 @@ public class Quidem {
         if (command == null) {
           break;
         }
+        while (!commands.isEmpty()) {
+          final Command previousCommand = commands.get(commands.size() - 1);
+          final Command mergedCommand = command.merge(previousCommand);
+          if (mergedCommand == null) {
+            break;
+          }
+          commands.remove(commands.size() - 1);
+          command = mergedCommand;
+        }
         commands.add(command);
       }
       return of(commands);
@@ -984,6 +995,32 @@ public class Quidem {
 
     public List<String> getOutput(Context x) {
       return output;
+    }
+
+    @Override public @Nullable Command merge(Command previousCommand) {
+      // If there is a blank line before expected output and an '!ok' command,
+      // treat the blank line as part of the expected output.
+      //
+      // This is necessary for Oracle mode:
+      //
+      //  select * from emp where 1 = 0;
+      //
+      //  no rows selected
+      //
+      //  !ok
+      //
+      if (previousCommand instanceof CommentCommand) {
+        final CommentCommand commentCommand = (CommentCommand) previousCommand;
+        if (commentCommand.lines.equals(ImmutableList.of(""))) {
+          return new OkCommand(lines,
+              ImmutableList.<String>builder()
+                  .addAll(commentCommand.lines)
+                  .addAll(output)
+                  .build());
+        }
+      }
+      // Merging is not possible.
+      return null;
     }
   }
 

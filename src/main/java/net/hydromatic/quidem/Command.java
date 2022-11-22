@@ -16,6 +16,8 @@
  */
 package net.hydromatic.quidem;
 
+import org.checkerframework.checker.nullness.qual.Nullable;
+
 import java.io.PrintWriter;
 import java.io.Writer;
 import java.sql.Connection;
@@ -46,6 +48,12 @@ public interface Command {
    * @throws Exception if command fails
    */
   void execute(Context x, boolean execute) throws Exception;
+
+  /** Merges this command with the previous command.
+   * Returns null if merging is not possible. */
+  @Nullable default Command merge(Command previousCommand) {
+    return null;
+  }
 
   /** Execution context for a command. */
   interface Context {
