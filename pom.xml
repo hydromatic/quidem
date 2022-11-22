@@ -72,11 +72,13 @@
     <maven-enforcer-plugin.version>3.1.0</maven-enforcer-plugin.version>
     <maven-gpg-plugin.version>3.0.1</maven-gpg-plugin.version>
     <maven-javadoc-plugin.version>3.4.1</maven-javadoc-plugin.version>
-    <maven-javadoc-plugin.additionalOptions>-html5</maven-javadoc-plugin.additionalOptions>
     <maven-site-plugin.version>3.12.1</maven-site-plugin.version>
     <maven-source-plugin.version>3.2.1</maven-source-plugin.version>
     <maven-surefire-plugin.version>3.0.0-M7</maven-surefire-plugin.version>
     <scott-data-hsqldb.version>0.2</scott-data-hsqldb.version>
+
+    <maven-javadoc-plugin.additionalOptions>-html5</maven-javadoc-plugin.additionalOptions>
+    <maven-javadoc-plugin.link>https://docs.oracle.com/en/java/javase/17/docs/api/</maven-javadoc-plugin.link>
   </properties>
 
   <!-- Environment settings. -->
@@ -162,10 +164,11 @@
         <version>${maven-javadoc-plugin.version}</version>
         <configuration>
           <additionalOptions>${maven-javadoc-plugin.additionalOptions}</additionalOptions>
-          <show>public</show>
           <links>
-            <link>https://docs.oracle.com/en/java/javase/17/docs/api/</link>
+            <link>${maven-javadoc-plugin.link}</link>
           </links>
+          <show>public</show>
+          <source>8</source>
         </configuration>
       </plugin>
       <plugin>
@@ -363,7 +366,11 @@
         <version>${maven-javadoc-plugin.version}</version>
         <configuration>
           <additionalOptions>${maven-javadoc-plugin.additionalOptions}</additionalOptions>
+          <links>
+            <link>${maven-javadoc-plugin.link}</link>
+          </links>
           <show>public</show>
+          <source>8</source>
         </configuration>
       </plugin>
     </plugins>
