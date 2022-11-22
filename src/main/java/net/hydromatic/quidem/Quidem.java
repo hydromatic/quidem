@@ -137,7 +137,7 @@ public class Quidem {
       this.writer = new PrintWriter(rawWriter);
     }
     final List<Object> list = new ArrayList<Object>();
-    list.add(OutputFormat.CSV);
+    list.add(BuiltInOutputFormat.CSV);
     this.map.put(Property.OUTPUTFORMAT.propertyName(), list);
     this.env = new TopEnv(config.env());
   }
@@ -639,7 +639,7 @@ public class Quidem {
             Property property;
             if (propertyName.equals("outputformat")) {
               property = Property.OUTPUTFORMAT;
-              value = OutputFormat.valueOf(parts[2].toUpperCase());
+              value = BuiltInOutputFormat.valueOf(parts[2].toUpperCase());
             } else {
               property = Property.OTHER;
               if (valueString.equals("null")) {
@@ -751,128 +751,15 @@ public class Quidem {
     }
   }
 
-  /** Schemes for converting the output of a SQL statement into text. */
-  enum OutputFormat {
-    CSV {
-      @Override public void format(ResultSet resultSet,
-          List<String> headerLines, List<String> bodyLines,
-          List<String> footerLines, boolean sort) throws Exception {
-        final ResultSetMetaData metaData = resultSet.getMetaData();
-        final int n = metaData.getColumnCount();
-        final StringBuilder buf = new StringBuilder();
-        for (int i = 0; i < n; i++) {
-          if (i > 0) {
-            buf.append(", ");
-          }
-          buf.append(metaData.getColumnLabel(i + 1));
-        }
-        headerLines.add(buf.toString());
-        buf.setLength(0);
-        final List<String> lines = new ArrayList<>();
-        while (resultSet.next()) {
-          for (int i = 0; i < n; i++) {
-            if (i > 0) {
-              buf.append(", ");
-            }
-            buf.append(resultSet.getString(i + 1));
-          }
-          lines.add(buf.toString());
-          buf.setLength(0);
-        }
-        if (sort) {
-          Collections.sort(lines);
-        }
-        bodyLines.addAll(lines);
-      }
-    },
-
-    /**
-     * Example 1 (0 rows):
-     *
-     * <blockquote><pre>
-     * no rows selected
-     * </pre></blockquote>
-     *
-     * <p>Example 2 (fewer than 6 rows):
-     *
-     * <blockquote><pre>
-     *   ename deptno gender first_value
-     *   ----- ------ ------ -----------
-     *   Jane      10 F      Jane
-     *   Bob       10 M      Jane
-     * </pre></blockquote>
-     *
-     * <p>Example 3 (6 or more rows):
-     *
-     * <blockquote><pre>
-     *   ename deptno gender first_value
-     *   ----- ------ ------ -----------
-     *   Jane      10 F      Jane
-     *   Bob       10 M      Jane
-     *   Alpha     10 M      Jane
-     *   Charlie   10 F      Jane
-     *   Delta     10 M      Jane
-     *   Echo      10 F      Jane
-     * &nbsp;
-     *   7 rows selected.
-     * </pre></blockquote>
-     */
-    ORACLE {
-      @Override public void format(ResultSet resultSet,
-          List<String> headerLines, List<String> bodyLines,
-          List<String> footerLines, boolean sort) throws Exception {
-        Quidem.format(resultSet, headerLines, bodyLines, footerLines, sort,
-            this);
-      }
-    },
-
-    // Example:
-    //
-    //  ename | deptno | gender | first_value
-    // -------+--------+--------+-------------
-    //  Jane  |     10 | F      | Jane
-    //  Bob   |     10 | M      | Jane
-    // (2 rows)
-    PSQL {
-      @Override public void format(ResultSet resultSet,
-          List<String> headerLines, List<String> bodyLines,
-          List<String> footerLines, boolean sort) throws Exception {
-        Quidem.format(resultSet, headerLines, bodyLines, footerLines, sort,
-            this);
-      }
-    },
-
-    // Example:
-    //
-    // +-------+--------+--------+-------------+
-    // | ename | deptno | gender | first_value |
-    // +-------+--------+--------+-------------+
-    // | Jane  |     10 | F      | Jane        |
-    // | Bob   |     10 | M      | Jane        |
-    // +-------+--------+--------+-------------+
-    // (2 rows)
-    MYSQL {
-      @Override public void format(ResultSet resultSet,
-          List<String> headerLines, List<String> bodyLines,
-          List<String> footerLines, boolean sort) throws Exception {
-        Quidem.format(resultSet, headerLines, bodyLines, footerLines, sort,
-            this);
-      }
-    };
-
-    public abstract void format(ResultSet resultSet, List<String> headerLines,
-        List<String> bodyLines, List<String> footerLines, boolean sort)
-        throws Exception;
-  }
-
-  private static void format(ResultSet resultSet, List<String> headerLines,
+  /** Called from {@link BuiltInOutputFormat} methods. */
+  static void format(ResultSet resultSet, List<String> headerLines,
       List<String> bodyLines, List<String> footerLines, boolean sort,
-      OutputFormat format) throws SQLException {
-    final boolean mysql = format == OutputFormat.MYSQL;
+      BuiltInOutputFormat format) throws SQLException {
+    final boolean mysql = format == BuiltInOutputFormat.MYSQL;
     final ResultSetMetaData metaData = resultSet.getMetaData();
     final int n = metaData.getColumnCount();
     final int[] widths = new int[n];
-    final List<String[]> rows = new ArrayList<String[]>();
+    final List<String[]> rows = new ArrayList<>();
     final boolean[] rights = new boolean[n];
 
     for (int i = 0; i < n; i++) {
@@ -927,7 +814,7 @@ public class Quidem {
         buf.append(chars('-', widths[i]));
         break;
       default:
-        buf.append(format == OutputFormat.MYSQL || i > 0 ? "+" : "");
+        buf.append(format == BuiltInOutputFormat.MYSQL || i > 0 ? "+" : "");
         buf.append(chars('-', widths[i] + 2));
       }
     }
@@ -1394,7 +1281,7 @@ public class Quidem {
           || value instanceof Boolean
           || value instanceof BigDecimal
           || value instanceof String
-          || value instanceof OutputFormat);
+          || value instanceof BuiltInOutputFormat);
     }
 
     public void execute(Context x, boolean execute) throws Exception {
