@@ -71,7 +71,7 @@ public class Quidem {
 
   /** The empty environment. Returns null for all database names. */
   public static final ConnectionFactory EMPTY_CONNECTION_FACTORY =
-      new ChainingConnectionFactory(ImmutableList.of());
+      ConnectionFactories.empty();
 
   /** A command handler that defines no commands. */
   public static final CommandHandler EMPTY_COMMAND_HANDLER =
@@ -1236,7 +1236,9 @@ public class Quidem {
    *
    * <p>It is kind of a directory service.
    *
-   * <p>Caller must close the connection. */
+   * <p>Caller must close the connection.
+   *
+   * @see ConnectionFactories */
   public interface ConnectionFactory {
     /** Creates a connection to the named database or reference database.
      *
@@ -1247,7 +1249,8 @@ public class Quidem {
      * @param reference Whether we require a real connection or a reference
      *                  connection
      */
-    Connection connect(String name, boolean reference) throws Exception;
+    @Nullable Connection connect(String name, boolean reference)
+        throws Exception;
   }
 
   /** Property whose value may be set. */

@@ -18,6 +18,8 @@ package net.hydromatic.quidem;
 
 import com.google.common.collect.ImmutableList;
 
+import org.checkerframework.checker.nullness.qual.Nullable;
+
 import java.sql.Connection;
 import java.util.List;
 
@@ -26,11 +28,12 @@ import java.util.List;
 class ChainingConnectionFactory implements Quidem.ConnectionFactory {
   private final List<Quidem.ConnectionFactory> factories;
 
-  ChainingConnectionFactory(List<Quidem.ConnectionFactory> factories) {
+  ChainingConnectionFactory(
+      Iterable<? extends Quidem.ConnectionFactory> factories) {
     this.factories = ImmutableList.copyOf(factories);
   }
 
-  @Override public Connection connect(String name, boolean reference)
+  @Override public @Nullable Connection connect(String name, boolean reference)
       throws Exception {
     for (Quidem.ConnectionFactory factory : factories) {
       Connection c = factory.connect(name, reference);

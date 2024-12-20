@@ -14,22 +14,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package net.hydromatic.quidem;
+package net.hydromatic.quidem.record;
 
-import org.checkerframework.checker.nullness.qual.Nullable;
-
-import java.sql.Connection;
-
-/** Connection factory that says all databases are unknown,
- * and returns null when asked for a reference connection. */
-class UnsupportedConnectionFactory
-    implements Quidem.ConnectionFactory {
-  public @Nullable Connection connect(String name, boolean reference) {
-    if (reference) {
-      return null;
-    }
-    throw new RuntimeException("Unknown database: " + name);
-  }
+/** Recording mode.
+ *
+ * @see Config#withMode(Mode) */
+public enum Mode {
+  PLAY, RECORD, PASS_THROUGH
 }
 
-// End UnsupportedConnectionFactory.java
+// End Mode.java

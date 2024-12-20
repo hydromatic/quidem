@@ -16,6 +16,8 @@
  */
 package net.hydromatic.quidem;
 
+import org.checkerframework.checker.nullness.qual.Nullable;
+
 import java.sql.Connection;
 import java.sql.DriverManager;
 
@@ -35,7 +37,7 @@ class SimpleConnectionFactory implements Quidem.ConnectionFactory {
     this.password = password;
   }
 
-  @Override public Connection connect(String name, boolean reference)
+  @Override public @Nullable Connection connect(String name, boolean reference)
       throws Exception {
     if (!reference && name.equals(this.name)) {
       return DriverManager.getConnection(url, user, password);

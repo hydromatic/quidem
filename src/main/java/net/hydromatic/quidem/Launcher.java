@@ -117,7 +117,7 @@ class Launcher {
         final String url = args.get(i + 2);
         final String user = args.get(i + 3);
         final String password = args.get(i + 4);
-        factories.add(new SimpleConnectionFactory(name, url, user, password));
+        factories.add(ConnectionFactories.simple(name, url, user, password));
         i += 5;
         continue;
       }
@@ -201,9 +201,9 @@ class Launcher {
       throw new RuntimeException("Error opening output " + outFile, e);
     }
 
-    factories.add(new UnsupportedConnectionFactory());
-    final ChainingConnectionFactory connectionFactory =
-        new ChainingConnectionFactory(factories);
+    factories.add(ConnectionFactories.unsupported());
+    final Quidem.ConnectionFactory connectionFactory =
+        ConnectionFactories.chain(factories);
     final ChainingCommandHandler commandHandler =
         new ChainingCommandHandler(commandHandlers);
 
