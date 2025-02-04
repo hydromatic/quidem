@@ -63,6 +63,7 @@
     <checkerframework.version>3.42.0</checkerframework.version>
     <!-- We support checkstyle 9.3 and higher; 10.0 requires JDK 11 or higher. -->
     <checkstyle.version>10.12.7</checkstyle.version>
+    <foodmart-data-hsqldb.version>0.5</foodmart-data-hsqldb.version>
     <git-commit-id-plugin.version>4.9.10</git-commit-id-plugin.version>
     <!-- We support Guava versions 19.0 and higher. -->
     <guava.version>33.0.0-jre</guava.version>
@@ -77,7 +78,9 @@
     <maven-site-plugin.version>4.0.0-M13</maven-site-plugin.version>
     <maven-source-plugin.version>3.3.0</maven-source-plugin.version>
     <maven-surefire-plugin.version>3.2.5</maven-surefire-plugin.version>
+    <postgresql-driver.version>42.7.5</postgresql-driver.version>
     <scott-data-hsqldb.version>0.2</scott-data-hsqldb.version>
+    <steelwheels-data-hsqldb.version>0.2</steelwheels-data-hsqldb.version>
 
     <maven-javadoc-plugin.additionalOptions>-html5</maven-javadoc-plugin.additionalOptions>
     <maven-javadoc-plugin.link>https://docs.oracle.com/en/java/javase/17/docs/api/</maven-javadoc-plugin.link>
@@ -136,8 +139,20 @@
     </dependency>
     <dependency>
       <groupId>net.hydromatic</groupId>
+      <artifactId>foodmart-data-hsqldb</artifactId>
+      <version>${foodmart-data-hsqldb.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>net.hydromatic</groupId>
       <artifactId>scott-data-hsqldb</artifactId>
       <version>${scott-data-hsqldb.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>net.hydromatic</groupId>
+      <artifactId>steelwheels-data-hsqldb</artifactId>
+      <version>${steelwheels-data-hsqldb.version}</version>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -163,6 +178,12 @@
       <groupId>org.junit.jupiter</groupId>
       <artifactId>junit-jupiter-params</artifactId>
       <version>${junit-jupiter.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.postgresql</groupId>
+      <artifactId>postgresql</artifactId>
+      <version>${postgresql-driver.version}</version>
       <scope>test</scope>
     </dependency>
   </dependencies>

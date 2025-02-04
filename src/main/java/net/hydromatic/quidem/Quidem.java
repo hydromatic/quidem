@@ -50,6 +50,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.StringTokenizer;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 /**
  * Runs a SQL script.
@@ -71,7 +72,7 @@ public class Quidem {
 
   /** The empty environment. Returns null for all database names. */
   public static final ConnectionFactory EMPTY_CONNECTION_FACTORY =
-      new ChainingConnectionFactory(ImmutableList.of());
+      ConnectionFactories.empty();
 
   /** A command handler that defines no commands. */
   public static final CommandHandler EMPTY_COMMAND_HANDLER =
@@ -1236,7 +1237,9 @@ public class Quidem {
    *
    * <p>It is kind of a directory service.
    *
-   * <p>Caller must close the connection. */
+   * <p>Caller must close the connection.
+   *
+   * @see ConnectionFactories */
   public interface ConnectionFactory {
     /** Creates a connection to the named database or reference database.
      *
@@ -1247,7 +1250,22 @@ public class Quidem {
      * @param reference Whether we require a real connection or a reference
      *                  connection
      */
-    Connection connect(String name, boolean reference) throws Exception;
+    @Nullable Connection connect(String name, boolean reference)
+        throws Exception;
+
+    /** Returns a supplier of connections to a particular database.
+     *
+     * @param name Database name
+     */
+    default Supplier<Connection> supplier(String name) {
+      return () -> {
+        try {
+          return this.connect(name, false);
+        } catch (Exception e) {
+          throw new RuntimeException(e);
+        }
+      };
+    }
   }
 
   /** Property whose value may be set. */
@@ -1288,11 +1306,8 @@ public class Quidem {
 
     public void execute(Context x, boolean execute) throws Exception {
       x.echo(lines);
-      List<Object> list = map.get(propertyName);
-      if (list == null) {
-        list = new ArrayList<Object>();
-        map.put(propertyName, list);
-      }
+      final List<Object> list =
+          map.computeIfAbsent(propertyName, k -> new ArrayList<>());
       if (list.isEmpty() || this instanceof PushCommand) {
         list.add(value);
       } else {
