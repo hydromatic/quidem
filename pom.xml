@@ -59,6 +59,7 @@
 
     <!-- Component and plugin versions, in alphabetical order. -->
     <build-helper-maven-plugin.version>3.5.0</build-helper-maven-plugin.version>
+    <calcite.version>1.38.0</calcite.version>
     <checkerframework.version>3.42.0</checkerframework.version>
     <!-- We support checkstyle 9.3 and higher; 10.0 requires JDK 11 or higher. -->
     <checkstyle.version>10.12.7</checkstyle.version>
@@ -137,6 +138,13 @@
       <groupId>net.hydromatic</groupId>
       <artifactId>scott-data-hsqldb</artifactId>
       <version>${scott-data-hsqldb.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <!-- Add dependency on Calcite only for tests (the Puffin utility class). -->
+      <groupId>org.apache.calcite</groupId>
+      <artifactId>calcite-core</artifactId>
+      <version>${calcite.version}</version>
       <scope>test</scope>
     </dependency>
     <dependency>
