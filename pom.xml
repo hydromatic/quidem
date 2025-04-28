@@ -8,7 +8,7 @@
   </parent>
 
   <artifactId>quidem</artifactId>
-  <version>0.12-SNAPSHOT</version>
+  <version>0.12</version>
   <packaging>jar</packaging>
 
   <!-- More project information. -->
@@ -105,7 +105,7 @@
     <connection>scm:git:git://github.com/hydromatic/quidem.git</connection>
     <developerConnection>scm:git:git@github.com:hydromatic/quidem.git</developerConnection>
     <url>https://github.com/hydromatic/quidem/tree/main</url>
-    <tag>HEAD</tag>
+    <tag>quidem-0.12</tag>
   </scm>
 
   <repositories>
